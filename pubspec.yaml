@@ -11,131 +11,84 @@ dependencies:
   flutter:
     sdk: flutter
 
- 
-
-  # 📌 ไอคอนและ UI
+  # 📌 UI Component & Icons
   cupertino_icons: ^1.0.8
-  
-  # 📌 Firebase & ผู้ใช้
+  crystal_navigation_bar: ^1.0.4
+  iconly: ^1.0.1
+  fl_chart: ^1.0.0
+  table_calendar: ^3.2.0
+
+  # 📌 Firebase Services
   firebase_core: ^3.13.1
   firebase_auth: ^5.5.4
   cloud_firestore: ^5.6.8
   google_sign_in: ^6.1.6
- 
 
-  
-  # 📌 ตัวช่วยจัดการข้อมูลและรูปภาพ
+  # 📌 State Management (Riverpod)
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
-  image_picker: ^1.1.2
+
+  # 📌 Utilities (Tools)
   intl_utils: ^2.8.10
-  crystal_navigation_bar: ^1.0.4
-  iconly: ^1.0.1
-  video_player: ^2.9.5
   shared_preferences: ^2.5.3
-  tflite_flutter: ^0.11.0
   path_provider: ^2.1.5
-  image: ^4.5.4  # ✅ เปลี่ยนจาก 4.5.4 เป็น 3.0.2 ให้เข้ากับ tflite_flutter_helper
-  tensorflow_lite_flutter: ^3.0.0
-  camera: ^0.11.1
-  fl_chart: ^1.0.0
-  table_calendar: ^3.2.0
-  flutter_launcher_icons: ^0.13.1
   
+  # 📌 Media (Camera/Video/Image)
+  camera: ^0.11.1
+  image_picker: ^1.1.2
+  video_player: ^2.9.5
+  image: ^4.5.4 
 
-
-dependency_overrides:
-  image: ^3.0.2  
+  # 📌 AI & Machine Learning
+  # ใช้ tflite_flutter แทนตัวเก่าที่มีปัญหา
+  tflite_flutter: ^0.11.0 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   
-  flutter_lints: ^6.0.0
+  flutter_lints: ^5.0.0 # แนะนำใช้ 5.0.0 หรือล่าสุดที่ stable
+  
+  # 📌 Code Generator (จำเป็นสำหรับ Riverpod Annotation)
+  build_runner: ^2.4.8
+  riverpod_generator: ^2.6.3
+  
+  # 📌 App Icon Generator
+  flutter_launcher_icons: ^0.13.1
 
-flutter_icons:
+# 📌 ตั้งค่าไอคอนแอป
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png" # ใช้สำหรับ iOS
+  image_path: "assets/icon/icon.png"
   remove_alpha_ios: true
   remove_alpha_android: true
-  adaptive_icon_background: "assets/icon/icon_bg.png" # แยกพื้นหลัง
-  adaptive_icon_foreground: "assets/icon/icon_fg.png" # ไอคอนหลัก (ใส่เฉพาะตัวรูป ไม่มีพื้นหลัง)
+  adaptive_icon_background: "assets/icon/icon_bg.png"
+  adaptive_icon_foreground: "assets/icon/icon_fg.png"
   min_sdk_android: 28
-
 
 flutter:
   uses-material-design: true
 
-  # 📌 เพิ่ม assets สำหรับรูป BMI
+  # 📌 Assets (เรียกเป็นโฟลเดอร์ ประหยัดบรรทัด)
   assets:
-    - assets/bmi/girl_18.5.png
-    - assets/bmi/girl_18.5-24.5.png
-    - assets/bmi/girl_25-30.png
-    - assets/bmi/girl_35-39.5.png
-    - assets/bmi/girl_40.png
-    - assets/bmi/man_18.5-24.5.png
-    - assets/bmi/man_18.5.png
-    - assets/bmi/man_25-30.png
-    - assets/bmi/man_35-39.5.png
-    - assets/bmi/man_40.png
-    - assets/icon/welcome.png
-    - assets/icon/logo.png
-    - assets/icon/sum.png
-    - assets/icon/google_logo.png
-    - assets/videos/intro.mp4
-    - assets/models/kinrooV5.tflite
-    - assets/food/กระเพราเนื้อเปื่อย.jpg
-    - assets/food/กระเพราไก่.jpg
-    - assets/food/ข้าวผัดกุ้ง.jpg
-    - assets/food/ข้าวมันไก่.jpg
-    - assets/food/ข้าวหมูแดง.jpg
-    - assets/food/กระเพราหมูสับ.jpg
-    - assets/food/ก๋วยเตี๋ยว.jpg
-    - assets/food/แกงเขียวหวาน.jpg
-    - assets/food/แกงจืด.jpg
-    - assets/food/แกงหน่อไม้.jpg
-    - assets/food/ไก่ทอด.jpg
-    - assets/food/ส้มตำ.jpg
-    - assets/food/ไก่ย่าง.jpg
-    - assets/food/ขนมจีนน้ำยา.jpg
-    - assets/food/ข้าวต้มปลา.jpg
-    - assets/food/ข้าวต้มหมูสับ.jpg
-    - assets/food/ข้าวต้มกุ้ง.jpg
-    - assets/food/ข้าวไข่เจียว.jpg
-    - assets/food/ข้าวซอยไก่.jpg
-    - assets/food/ข้าวผัดกุ้ง.jpg
-    - assets/food/ข้าวผัดไข่.jpg
-    - assets/food/ข้าวขาหมู.jpg
-    - assets/food/ข้าวหมูทอดกระเทียม.jpg
-    - assets/food/ข้าวเหนียวหมูปิ้ง.jpg
-    - assets/food/ไข่พะโล้.jpg
-    - assets/food/ชาบู.jpg
-    - assets/food/ต้มยำกุ้ง.jpg
-    - assets/food/ต้มไก่.jpg
-    - assets/food/ต้มเนื้อ.jpg
-    - assets/food/มาม่า.jpg
-    - assets/food/ซูชิ.jpg
-    - assets/food/ปลาทอด.jpg
-    - assets/food/ผัดไทย.jpg
-    - assets/food/ผัดผักรวมมิตร.jpg
-    - assets/food/ยำทะเล.jpg
-    - assets/food/ลาบหมู.jpg
-    - assets/food/ลูกชิ้นหมู.jpg
-    - assets/food/สปาเกตตี้ผัดขี้เมา.jpg
-    - assets/food/ส้มตำ.jpg
-    - assets/food/สลัดผัก.jpg
-    - assets/food/สุกี้น้ำ.jpg  
-    - assets/food/ไส้กรอกอีสาน.jpg
-    - assets/food/หมูกระทะ.jpg
-    - assets/food/หอยทอด.jpg
-    - assets/food/ผัดกระเพราหมูกรอบ.jpg
-  fonts:
-      - family: Kanit
-        fonts:
-          - asset: assets/fonts/Kanit-Regular.ttf
-          - asset: assets/fonts/Kanit-Bold.ttf
-            weight: 700
-          - asset: assets/fonts/Kanit-Italic.ttf
-            style: italic
+    # โฟลเดอร์หลัก
+    - assets/icon/
+    - assets/videos/
+    - assets/models/
     
+    # โฟลเดอร์รูปภาพแยกตามหมวดหมู่
+    - assets/bmi/
+    - assets/food/
+    
+    # ฟอนต์
+    - assets/fonts/
+
+  fonts:
+    - family: Kanit
+      fonts:
+        - asset: assets/fonts/Kanit-Regular.ttf
+        - asset: assets/fonts/Kanit-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Kanit-Italic.ttf
+          style: italic

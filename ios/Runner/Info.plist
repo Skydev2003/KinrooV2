@@ -41,6 +41,25 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Kinroo needs camera access to scan and capture food photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kinroo needs photo library access to pick images or videos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Kinroo saves captured photos or videos to your library.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Kinroo uses the microphone when recording video with sound.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.620249493204-es7gbhhmckimqhcqka8uta67du5pm3qg</string>
+			</array>
+		</dict>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

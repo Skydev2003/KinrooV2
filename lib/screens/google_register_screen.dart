@@ -18,36 +18,17 @@ class _GoogleRegisterScreenState extends State<GoogleRegisterScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _isLoading = false;
 
-  // ✅ สำหรับ Android ไม่ต้องระบุ clientId - จะใช้จาก google-services.json
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  static const String _iosClientId =
+      '620249493204-es7gbhhmckimqhcqka8uta67du5pm3qg.apps.googleusercontent.com';
+
+  // ใช้ clientId สำหรับ iOS เพื่อรองรับ Google Sign-In บน iPhone/iPad
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    clientId:
+        defaultTargetPlatform == TargetPlatform.iOS ? _iosClientId : null,
+  );
 
   // ฟังก์ชันสำหรับเปลี่ยนบัญชี Google
-  Future<void> _switchGoogleAccount() async {
-    setState(() => _isLoading = true);
-
-    try {
-      // ล็อกเอาท์จาก Google และ Firebase
-      await _googleSignIn.signOut();
-      await _auth.signOut();
-
-      // เริ่มกระบวนการเลือกบัญชีใหม่
-      await _createAccountWithGoogle();
-    } catch (e) {
-      if (kDebugMode) {
-        print("Switch Account Error: $e");
-      }
-      setState(() => _isLoading = false);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("เกิดข้อผิดพลาดในการเปลี่ยนบัญชี: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 
   Future<void> _createAccountWithGoogle() async {
     setState(() => _isLoading = true);

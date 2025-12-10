@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyB8uCD2DDUSzOPbfiw1mW1U-y_UtQkg_gk</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.kinroo</string>
+	<key>CLIENT_ID</key>
+	<string>620249493204-es7gbhhmckimqhcqka8uta67du5pm3qg.apps.googleusercontent.com</string>
+	<key>GCM_SENDER_ID</key>
+	<string>620249493204</string>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:620249493204:ios:a0386f2ddc8f64de249541</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>PROJECT_ID</key>
+	<string>kinroo-8b3a0</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.620249493204-es7gbhhmckimqhcqka8uta67du5pm3qg</string>
+	<key>STORAGE_BUCKET</key>
+	<string>kinroo-8b3a0.firebasestorage.app</string>
+</dict>
+</plist>

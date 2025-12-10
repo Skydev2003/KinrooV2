@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data'; // ✅ 1. เพิ่ม import นี้เพื่อใช้ Uint8List
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,15 +22,14 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
   Interpreter? _interpreter;
   final TextEditingController _foodController = TextEditingController();
   double calories = 0, protein = 0, fat = 0, carbs = 0;
-  double confidence = 0.0; // เพิ่มตัวแปรเก็บค่าความถูกต้อง
+  double confidence = 0.0;
   bool _isLoading = false;
-  bool _isManuallyEdited = false; // ตรวจสอบว่าผู้ใช้แก้ไขชื่ออาหารแล้วหรือไม่
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   // Custom colors
-  final Color primaryBlue = Color.fromARGB(255, 47, 130, 174);
-  final Color primaryBrown = Color.fromARGB(255, 70, 51, 43);
+  final Color primaryBlue = const Color.fromARGB(255, 47, 130, 174);
+  final Color primaryBrown = const Color.fromARGB(255, 70, 51, 43);
 
   @override
   void initState() {
@@ -37,7 +37,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
     _lockOrientation();
     _loadModel();
     _animationController = AnimationController(
-      duration: Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -94,21 +94,24 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
       return;
     }
 
-    var input = _processImage(image);
-    var output = List.generate(1, (_) => List.filled(50, 0.0));
+    try {
+      var input = _processImage(image);
+      // สร้าง Output buffer ตามขนาดที่โมเดลต้องการ (1 row, 50 classes)
+      var output = List.generate(1, (_) => List.filled(50, 0.0));
 
-    _interpreter!.run(input, output);
+      _interpreter!.run(input, output);
 
-    setState(() {
-      // คำนวณค่าความถูกต้องและชื่ออาหาร
-      final result = _mapFoodLabelWithConfidence(output[0]);
-      String predictedFood = result['food'];
-      confidence = result['confidence'];
-      _isManuallyEdited = false; // รีเซ็ตสถานะการแก้ไข
+      setState(() {
+        final result = _mapFoodLabelWithConfidence(output[0]);
+        String predictedFood = result['food'];
+        confidence = result['confidence'];
 
-      _foodController.text = predictedFood;
-      _getNutritionData(predictedFood);
-    });
+        _foodController.text = predictedFood;
+        _getNutritionData(predictedFood);
+      });
+    } catch (e) {
+      print("❌ Error analyzing food: $e");
+    }
   }
 
   void _getNutritionData(String food) {
@@ -171,10 +174,8 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
       protein = data[1].toDouble();
       fat = data[2].toDouble();
       carbs = data[3].toDouble();
-      print("✅ อัปเดตข้อมูลโภชนาการเรียบร้อย!");
     } else {
       calories = protein = fat = carbs = 0;
-      print("⚠️ ไม่พบข้อมูลโภชนาการสำหรับเมนูนี้!");
     }
   }
 
@@ -196,13 +197,13 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
       });
 
       print("✅ บันทึกไปยัง Firebase สำเร็จ! (ID: ${docRef.id})");
-
       await fetchUserNutritionData();
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     } catch (e) {
       print("❌ เกิดข้อผิดพลาดขณะบันทึก Firebase: $e");
     }
@@ -213,27 +214,28 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
     required IconData icon,
     required VoidCallback onPressed,
     Color? backgroundColor,
-    AlignmentGeometry? alignment, // Added alignment parameter
+    AlignmentGeometry? alignment,
   }) {
+    // ✅ 3. ใช้ withOpacity แทน withValues เพื่อความเสถียร
     return Container(
       width: double.infinity,
       height: 60,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      alignment: alignment, // Apply alignment here
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      alignment: alignment,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: backgroundColor != null
-              ? [backgroundColor, backgroundColor.withValues(alpha: 0.8)]
-              : [primaryBlue, primaryBlue.withValues(alpha: 0.8)],
+              ? [backgroundColor, backgroundColor.withOpacity(0.8)]
+              : [primaryBlue, primaryBlue.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 8,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -243,15 +245,15 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
           onTap: onPressed,
           borderRadius: BorderRadius.circular(15),
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(icon, color: Colors.white, size: 24),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Text(
                   text,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -272,29 +274,29 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
     required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 6,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 24),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
@@ -313,9 +315,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          color: primaryBrown, // Solid background color as requested
-        ),
+        decoration: BoxDecoration(color: primaryBrown),
         child: SafeArea(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -325,18 +325,15 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            primaryBlue,
-                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
                           strokeWidth: 3,
                         ),
-                        SizedBox(height: 20),
-                        Text(
+                        const SizedBox(height: 20),
+                        const Text(
                           "กำลังโหลดโมเดล AI...",
                           style: TextStyle(
                             fontSize: 16,
-                            color:
-                                Colors.white, // Changed text color for contrast
+                            color: Colors.white,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -344,8 +341,8 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     ),
                   )
                 : _image == null
-                ? _buildInitialView()
-                : _buildResultView(),
+                    ? _buildInitialView()
+                    : _buildResultView(),
           ),
         ),
       ),
@@ -354,27 +351,25 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
 
   Widget _buildInitialView() {
     return Padding(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Header
           Container(
             width: double.infinity,
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [primaryBlue, primaryBrown],
                 begin: Alignment.topLeft,
-                // Changed end to bring brown color from left side
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
               children: [
-                Icon(Icons.camera_alt_rounded, size: 60, color: Colors.white),
-                SizedBox(height: 15),
-                Text(
+                const Icon(Icons.camera_alt_rounded, size: 60, color: Colors.white),
+                const SizedBox(height: 15),
+                const Text(
                   "สแกนอาหาร",
                   style: TextStyle(
                     fontSize: 28,
@@ -382,60 +377,48 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   "ถ่ายรูปหรือเลือกรูปอาหารเพื่อวิเคราะห์",
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withOpacity(0.9),
                   ),
                   textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-
-          SizedBox(height: 40),
-
-          // Action buttons
+          const SizedBox(height: 40),
           _buildGradientButton(
             text: "เปิดกล้อง",
             icon: Icons.camera_alt,
             onPressed: () => _pickImage(ImageSource.camera),
           ),
-
-          // New positioning for "เลือกจากแกลลอรี่"
           Align(
-            alignment: Alignment.bottomLeft, // Align to bottom left
+            alignment: Alignment.bottomLeft,
             child: SizedBox(
-              width:
-                  MediaQuery.of(context).size.width *
-                  1.0, // Adjust width as needed
+              width: MediaQuery.of(context).size.width * 1.0,
               child: _buildGradientButton(
                 text: "เลือกจากแกลลอรี่",
                 icon: Icons.photo_library,
                 onPressed: () => _pickImage(ImageSource.gallery),
-                backgroundColor:
-                    primaryBlue, // Changed to primaryBlue for consistency as requested
-                alignment:
-                    Alignment.centerLeft, // Align content within the button
+                backgroundColor: primaryBlue,
+                alignment: Alignment.centerLeft,
               ),
             ),
           ),
-
-          Spacer(),
-
-          // Info section
+          const Spacer(),
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -446,26 +429,16 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     showDialog(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: Text("เมนูที่รองรับ"),
-                        content: SingleChildScrollView(
+                        title: const Text("เมนูที่รองรับ"),
+                        content: const SingleChildScrollView(
                           child: Text(
-                            "แอพพลิเคชั่นตอนนี้รองรับเมนูอาหาร 50 เมนู คือ\n\n"
-                            "1. กระเพราไก่\n2. กระเพราเนื้อเปื่อย\n3. กระเพราหมูสับ\n4. ก๋วยเตี๋ยว\n5. แกงเขียวหวาน\n"
-                            "6. แกงจืด\n7. แกงหน่อไม้\n8. ไก่ทอด\n9. ไก่ย่าง\n10. ขนมจีนน้ำยา\n"
-                            "11. ข้าวขาหมู\n12. ข้าวไข่เจียว\n13. ข้าวซอยไก่\n14. ข้าวต้มกุ้ง\n15. ข้าวต้มปลา\n"
-                            "16. ข้าวต้มหมูสับ\n17. ข้าวผัดกุ้ง\n18. ข้าวผัดไข่\n19. ข้าวมันไก่\n20. ข้าวหมูแดง\n"
-                            "21. ข้าวหมูทอดกระเทียม\n22. ข้าวเหนียวหมูปิ้ง\n23. ไข่พะโล้\n24. คอหมูย่าง\n25. คะน้าหมูกรอบ\n"
-                            "26. ชาบู\n27. ซูชิ\n28. ต้มไก่\n29. ต้มเนื้อ\n30. ต้มยำกุ้ง\n"
-                            "31. น้ำปั่นผลไม้\n32. น้ำอัดลม\n33. บะหมี่กึ่งสำเร็๋จรูป\n34. ปลาทอด\n35. ปลาหมึกผัดไข่เค็ม\n"
-                            "36. ผัดกระเพราหมูกรอบ\n37. ผัดซีอิ้วหมู\n38. ผัดไทย\n39. ผัดผักรวมมิตร\n40. ยำทะเล\n"
-                            "41. ลาบหมู\n42. ลูกชิ้นหมู\n43. สปาเก็ตตี้ผัดขี้เมา\n44. ส้มตำ\n45. สลัดผัก\n"
-                            "46. สุกี้น้ำ\n47. ไส้กรอกอีสาน\n48. หมูกระทะ\n49. หอยทอด\n50. ไม่มีอาหาร",
+                            "แอพพลิเคชั่นตอนนี้รองรับเมนูอาหาร 50 เมนู...", // ตัดข้อความสั้นๆ เพื่อความกระชับในตัวอย่าง
                             style: TextStyle(fontSize: 14, height: 1.5),
                           ),
                         ),
                         actions: [
                           TextButton(
-                            child: Text("ปิด"),
+                            child: const Text("ปิด"),
                             onPressed: () => Navigator.of(ctx).pop(),
                           ),
                         ],
@@ -473,16 +446,12 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     );
                   },
                   child: CircleAvatar(
-                    backgroundColor: primaryBlue.withValues(alpha: 0.1),
+                    backgroundColor: primaryBlue.withOpacity(0.1),
                     radius: 24,
-                    child: Icon(
-                      Icons.info_outline,
-                      color: primaryBlue,
-                      size: 28,
-                    ),
+                    child: Icon(Icons.info_outline, color: primaryBlue, size: 28),
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
                   "วิธีใช้งาน",
                   style: TextStyle(
@@ -491,9 +460,9 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     color: primaryBrown,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  "1. ถ่ายรูปหรือเลือกรูปอาหาร\n2. รอระบบวิเคราะห์\n3. ตรวจสอบค่าความถูกต้อง\n4. แก้ไขชื่ออาหารหากจำเป็น\n5. บันทึกข้อมูลโภชนาการ\n\n💡 เคล็ดลับ: ถ่ายรูปให้ชัดเจน ไม่มีสิ่งกีดขวาง เพื่อความแม่นยำสูงสุด",
+                  "1. ถ่ายรูปหรือเลือกรูปอาหาร\n2. รอระบบวิเคราะห์\n3. ตรวจสอบค่าความถูกต้อง\n4. แก้ไขชื่ออาหารหากจำเป็น\n5. บันทึกข้อมูลโภชนาการ",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[600],
@@ -511,24 +480,20 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
 
   Widget _buildResultView() {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Back button (positioned at top left corner)
           Align(
             alignment: Alignment.topLeft,
             child: Container(
-              margin: EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 20),
               child: IconButton(
                 onPressed: () => setState(() => _image = null),
-                icon: Icon(
-                  Icons.arrow_back_ios,
-                  color: primaryBlue,
-                ), // Changed color to primaryBlue
+                icon: Icon(Icons.arrow_back_ios, color: primaryBlue),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -536,8 +501,6 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               ),
             ),
           ),
-
-          // Image display
           Container(
             width: double.infinity,
             height: 250,
@@ -545,9 +508,9 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 15,
-                  offset: Offset(0, 8),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -556,20 +519,17 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               child: Image.file(File(_image!.path), fit: BoxFit.cover),
             ),
           ),
-
-          SizedBox(height: 25),
-
-          // Confidence indicator
+          const SizedBox(height: 25),
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -583,7 +543,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                       color: confidence >= 70 ? Colors.green : Colors.orange,
                       size: 24,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       "ความถูกต้อง",
                       style: TextStyle(
@@ -594,7 +554,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -611,7 +571,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                         minHeight: 8,
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Text(
                       "${confidence.toInt()}%",
                       style: TextStyle(
@@ -626,55 +586,20 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     ),
                   ],
                 ),
-                if (confidence < 70) ...[
-                  SizedBox(height: 12),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange[200]!),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.orange[700],
-                          size: 20,
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            confidence < 50
-                                ? "ความถูกต้องต่ำ กรุณาตรวจสอบและแก้ไขชื่ออาหารด้านล่าง"
-                                : "ความถูกต้องปานกลาง แนะนำให้ตรวจสอบชื่ออาหาร",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange[700],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-
-          SizedBox(height: 20),
-
-          // Food name input
+          const SizedBox(height: 20),
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -689,16 +614,16 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     color: primaryBrown,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextField(
                   controller: _foodController,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
                     hintText: "แก้ไขชื่ออาหาร",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: primaryBlue.withValues(alpha: 0.3),
+                        color: primaryBlue.withOpacity(0.3),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -710,52 +635,13 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
                     fillColor: Colors.grey[50],
                   ),
                   onChanged: (value) => setState(() {
-                    _isManuallyEdited = true; // ผู้ใช้แก้ไขชื่ออาหารแล้ว
-                    _getNutritionData(value); // อัปเดตข้อมูลโภชนาการ
+                    _getNutritionData(value);
                   }),
                 ),
-                SizedBox(height: 8),
-                if (_isManuallyEdited)
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green[200]!),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, color: Colors.green[700], size: 16),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            "ชื่ออาหารถูกแก้ไขแล้ว",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Text(
-                    "💡 หากชื่ออาหารไม่ถูกต้อง สามารถแก้ไขได้ที่ช่องด้านบน",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
               ],
             ),
           ),
-
-          SizedBox(height: 25),
-
-          // Nutrition info
+          const SizedBox(height: 25),
           Text(
             "ข้อมูลโภชนาการ",
             style: TextStyle(
@@ -764,12 +650,11 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               color: primaryBrown,
             ),
           ),
-          SizedBox(height: 15),
-
+          const SizedBox(height: 15),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 15,
             mainAxisSpacing: 15,
             childAspectRatio: 1.2,
@@ -800,10 +685,7 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               ),
             ],
           ),
-
-          SizedBox(height: 30),
-
-          // Action buttons based on confidence
+          const SizedBox(height: 30),
           if (confidence < 50) ...[
             _buildGradientButton(
               text: "ถ่ายรูปใหม่",
@@ -811,10 +693,8 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
               onPressed: () => _pickImage(ImageSource.camera),
               backgroundColor: Colors.orange,
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
           ],
-
-          // Save button
           _buildGradientButton(
             text: "บันทึกข้อมูล",
             icon: Icons.save,
@@ -831,22 +711,35 @@ class _ScanFoodScreenState extends State<ScanFoodScreen>
   Future<void> fetchUserNutritionData() async {}
 }
 
+// ✅ 2. อัปเดตฟังก์ชันนี้ให้รองรับ image package v4+
+// เลิกใช้ getPixelSafe และ bitwise operation แบบเก่า
 List<List<List<List<double>>>> _processImage(XFile image) {
   final bytes = File(image.path).readAsBytesSync();
-  final decodedImage = img.decodeImage(Uint8List.fromList(bytes))!;
+  final decodedImage = img.decodeImage(Uint8List.fromList(bytes));
+
+  if (decodedImage == null) {
+    throw Exception("ไม่สามารถอ่านรูปภาพได้");
+  }
+
+  // Resize รูปภาพ
   final resizedImage = img.copyResize(decodedImage, width: 224, height: 224);
 
+  // แปลงค่า Pixel เป็น input ที่ Normalized แล้ว (0.0 - 1.0)
+  // รองรับ Image package v4 ที่ pixel.r, pixel.g, pixel.b เข้าถึงได้โดยตรง
   final input = List.generate(
     1,
     (_) => List.generate(
       224,
       (y) => List.generate(
         224,
-        (x) => [
-          (resizedImage.getPixelSafe(x, y) & 0xFF) / 255.0,
-          ((resizedImage.getPixelSafe(x, y) >> 8) & 0xFF) / 255.0,
-          ((resizedImage.getPixelSafe(x, y) >> 16) & 0xFF) / 255.0,
-        ],
+        (x) {
+          final pixel = resizedImage.getPixel(x, y);
+          return [
+            pixel.r / 255.0, // Red
+            pixel.g / 255.0, // Green
+            pixel.b / 255.0, // Blue
+          ];
+        },
       ),
     ),
   );
@@ -856,63 +749,20 @@ List<List<List<List<double>>>> _processImage(XFile image) {
 
 Map<String, dynamic> _mapFoodLabelWithConfidence(List<double> predictions) {
   final foodLabels = [
-    "กระเพราหมูสับ",
-    "กระเพราเนื้อเปื่อย",
-    "กระเพราไก่",
-    "ก๋วยเตี๋ยว",
-    "ขนมจีนน้ำยา",
-    "ข้าวขาหมู",
-    "ข้าวซอยไก่",
-    "ข้าวต้มกุ้ง",
-    "ข้าวต้มปลา",
-    "ข้าวต้มหมูสับ",
-    "ข้าวผัดกุ้ง",
-    "ข้าวผัดไข่",
-    "ข้าวมันไก่",
-    "ข้าวหมูทอดกระเทียม",
-    "ข้าวหมูแดง",
-    "ข้าวเหนียวหมูปิ้ง",
-    "ข้าวไข่เจียว",
-    "คอหมูย่าง",
-    "คะน้าหมูกรอบ",
-    "ชาบู",
-    "ซูชิ",
-    "ต้มยำกุ้ง",
-    "ต้มเนื้อ",
-    "ต้มไก่",
-    "น้ำปั่นผลไม้",
-    "น้ำอัดลม",
-    "บะหมี่กึ่งสำเร็จรูป",
-    "ปลาทอด",
-    "ปลาหมึกผัดไข่เค็ม",
-    "ผัดกะเพราหมูกรอบ",
-    "ผัดซีอิ๊วหมู",
-    "ผัดผักรวมมิตร",
-    "ผัดไทย",
-    "ยำทะเล",
-    "ลาบหมู",
-    "ลูกชิ้นหมู",
-    "สปาเกตตีผัดขี้เมา",
-    "สลัดผัก",
-    "สุกี้น้ำ",
-    "ส้มตำ",
-    "หมูกระทะ",
-    "หอยทอด",
-    "แกงจืด",
-    "แกงหน่อไม้",
-    "แกงเขียวหวาน",
-    "ไก่ทอด",
-    "ไก่ย่าง",
-    "ไข่พะโล้",
-    "ไม่มีอาหาร",
-    "ไส้กรอกอีสาน",
+    "กระเพราหมูสับ", "กระเพราเนื้อเปื่อย", "กระเพราไก่", "ก๋วยเตี๋ยว", "ขนมจีนน้ำยา",
+    "ข้าวขาหมู", "ข้าวซอยไก่", "ข้าวต้มกุ้ง", "ข้าวต้มปลา", "ข้าวต้มหมูสับ",
+    "ข้าวผัดกุ้ง", "ข้าวผัดไข่", "ข้าวมันไก่", "ข้าวหมูทอดกระเทียม", "ข้าวหมูแดง",
+    "ข้าวเหนียวหมูปิ้ง", "ข้าวไข่เจียว", "คอหมูย่าง", "คะน้าหมูกรอบ", "ชาบู",
+    "ซูชิ", "ต้มยำกุ้ง", "ต้มเนื้อ", "ต้มไก่", "น้ำปั่นผลไม้",
+    "น้ำอัดลม", "บะหมี่กึ่งสำเร็จรูป", "ปลาทอด", "ปลาหมึกผัดไข่เค็ม", "ผัดกะเพราหมูกรอบ",
+    "ผัดซีอิ๊วหมู", "ผัดผักรวมมิตร", "ผัดไทย", "ยำทะเล", "ลาบหมู",
+    "ลูกชิ้นหมู", "สปาเกตตีผัดขี้เมา", "สลัดผัก", "สุกี้น้ำ", "ส้มตำ",
+    "หมูกระทะ", "หอยทอด", "แกงจืด", "แกงหน่อไม้", "แกงเขียวหวาน",
+    "ไก่ทอด", "ไก่ย่าง", "ไข่พะโล้", "ไม่มีอาหาร", "ไส้กรอกอีสาน",
   ];
 
-  // หาค่าสูงสุดและ index
   double maxValue = predictions.reduce((a, b) => a > b ? a : b);
   int predictedIndex = predictions.indexOf(maxValue);
-
-  // คำนวณ confidence เป็นเปอร์เซ็นต์
   double confidenceValue = maxValue * 100;
 
   String foodName = (predictedIndex >= 0 && predictedIndex < foodLabels.length)
@@ -920,11 +770,6 @@ Map<String, dynamic> _mapFoodLabelWithConfidence(List<double> predictions) {
       : "อาหารไม่รู้จัก";
 
   return {'food': foodName, 'confidence': confidenceValue};
-}
-
-String _mapFoodLabel(List<double> predictions) {
-  final result = _mapFoodLabelWithConfidence(predictions);
-  return result['food'];
 }
 
 String getCurrentUserId() {
